@@ -49,4 +49,20 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: 2143253647898765/infra_ci:latest 
+          tags: 2143253647898765/infra_ci:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_and_push_to_docker_hub
+    steps:
+    - name: executing remote ssh commands to deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.SSH_KEY }}
+        passphrase: ${{ secrets.PASSPHRASE }}
+        script: |
+          sudo docker pull 2143253647898765/infra_ci
+          sudo docker stop $(sudo docker ps -a -q)
+          sudo docker run --rm -d -p 5000:5000 2143253647898765/infra_ci
